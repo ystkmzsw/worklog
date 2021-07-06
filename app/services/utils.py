@@ -9,13 +9,21 @@ Utility functions for services
 from pymongo import MongoClient
 import datetime
 import sys
-from simplecrypt import encrypt, decrypt
+#from simplecrypt import encrypt, decrypt
+from Crypto.Cipher import AES
+from Crypto.Hash import SHA256
+from Crypto import Random
 
-encKey = b'c\xf8\xccH\xbe\x7ffp\xda\xe4\xa4TY\x03\x85CR<\x97f'
+sha = SHA256.new()
+sha.update('password_enc_key'.encode())
+encKey = sha.digest()
+
+def create_aes(iv):
+    return AES.new(encKey, AES.MODE_CFB, iv)
 
 try:
-    mongoCredentials = MongoClient("mongodb://mongo:27017/credentials")
-    mongoLog = MongoClient("mongodb://mongo:27017/log")
+    mongoCredentials = MongoClient("mongodb://localhost:27017/credentials")
+    mongoLog = MongoClient("mongodb://localhost:27017/log")
 except:
     exit("Error: Unable to connect to the databases")
     
@@ -38,16 +46,18 @@ def createUserInDatabase(user,password):
                                          "years": []}).inserted_id
     mongoCredentials.db.credentials.insert_one({"user_id": userId,
                                                 "username": user,
-                                                "password": encrypt(encKey, password),
+                                                "password": encryptPassword(password),
                                                 "sessionend": datetime.datetime.utcnow()})
     return mongoCredentials.db.credentials.find_one({"username": user,
                                                         "user_id": userId})
 
 def decryptPassword(password):
-    return decrypt(encKey, password).decode("utf8")
+    iv, ciphered = password[:AES.block_size], password[AES.block_size:]
+    return create_aes(iv).decrypt(ciphered).decode("utf8")
 
 def encryptPassword(password):
-    return encrypt(encKey, password)
+    iv = Random.new().read(AES.block_size)
+    return iv + create_aes(iv).encrypt(password.encode())
 
 def getUserSettings(user):
     userCred = getUserCredentials(user)
