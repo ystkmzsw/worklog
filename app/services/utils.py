@@ -11,12 +11,9 @@ import datetime
 import sys
 #from simplecrypt import encrypt, decrypt
 from Crypto.Cipher import AES
-from Crypto.Hash import SHA256
 from Crypto import Random
 
-sha = SHA256.new()
-sha.update('password_enc_key'.encode())
-encKey = sha.digest()
+encKey = b'V4\xe4\x1a\x9d\x81\xff_&\xdf\xf1H\xd2\x95\xfc\x8c\x00\xa2ZW\x0e\xae\x9dG\xc2o\x8e\x85\x03\x83\xfa!'
 
 def create_aes(iv):
     return AES.new(encKey, AES.MODE_CFB, iv)
