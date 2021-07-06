@@ -1,27 +1,29 @@
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   annotations:
     ingress.bluemix.net/redirect-to-https: "True"
-  name: ingress
+  name: worklog-ingress
 spec:
-  tls:
-    - hosts:
-        - <INGRESS_SUBDOMAIN>
-      secretName: <INGRESS_SECRET>
   backend:
-    serviceName: worklogui-service
-    servicePort: 3000
+    serviceName: worklogui
+    servicePort: 8080
   rules:
-    - host: <INGRESS_SUBDOMAIN>
+    - host: kawano-cluster-tok04-4216c78965aaa521311d0371fde68bf9-0000.jp-tok.containers.appdomain.cloud
       http:
         paths:
-          - path: /api
+          - path: /
+            pathType: Prefix
             backend:
-              serviceName: worklog-service
-              servicePort: 5000
+              service:
+                name: worklogui
+                port:
+                  number: 8080
           - path: /flasgger_static
+            pathType: Prefix
             backend:
-              serviceName: worklog-service
-              servicePort: 5000
+              service:
+                name: worklog3
+                port:
+                  number: 5000
