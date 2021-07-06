@@ -1,29 +1,65 @@
 ---
-apiVersion: extensions/v1beta1
-kind: Deployment
-metadata:
-  name: mongo
-spec:
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: mongo
-        version: v1
-    spec:
-      containers:
-        - image: mongo
-          name: mongo
-          ports:
-            - containerPort: 27017
----
 apiVersion: v1
 kind: Service
 metadata:
   name: mongo
+  labels:
+    app: mongo-statefulset
 spec:
+  type: ClusterIP
+  clusterIP: None
   ports:
     - port: 27017
-      targetPort: 27017
+      name: mongo
   selector:
-    name: mongo
+    app: mongo-statefulset
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: ibmc-block-bronze    # 20Gi IKS
+  # storageClassName: gluster-heketi     # 12Gi GlusterFS
+  # storageClassName: standard           # 2Gi  minikube
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo
+spec:
+  serviceName: mongo
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-statefulset
+  template:
+    metadata:
+      labels:
+        app: mongo-statefulset
+    spec:
+      containers:
+        - name: mongo
+          image: mongo
+          ports:
+            - containerPort: 27017
+              name: mongo
+          volumeMounts:
+            - name: pvc-data
+              mountPath: /data/db
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - mongo --port 27017 --eval "rs.status()" | grep -vq "REMOVED"
+            initialDelaySeconds: 45
+            timeoutSeconds: 5
+      volumes:
+        - name: pvc-data
+          persistentVolumeClaim:
+            claimName: pvc
