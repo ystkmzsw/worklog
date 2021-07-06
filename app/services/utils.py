@@ -22,8 +22,8 @@ def create_aes(iv):
     return AES.new(encKey, AES.MODE_CFB, iv)
 
 try:
-    mongoCredentials = MongoClient("mongodb://localhost:27017/credentials")
-    mongoLog = MongoClient("mongodb://localhost:27017/log")
+    mongoCredentials = MongoClient("mongodb://mongo:27017/credentials")
+    mongoLog = MongoClient("mongodb://mongo:27017/log")
 except:
     exit("Error: Unable to connect to the databases")
     
