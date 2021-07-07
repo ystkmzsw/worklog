@@ -6,24 +6,28 @@ metadata:
     ingress.bluemix.net/redirect-to-https: "True"
   name: worklog-ingress
 spec:
-  backend:
-    serviceName: worklogui
-    servicePort: 8080
   rules:
-    - host: kawano-cluster-tok04-4216c78965aaa521311d0371fde68bf9-0000.jp-tok.containers.appdomain.cloud
+    - host: <ingress subdomain here>
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: worklogui
+                name: worklog-ui
                 port:
-                  number: 8080
+                  number: 3000
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: worklog-api
+                port:
+                  number: 5000
           - path: /flasgger_static
             pathType: Prefix
             backend:
               service:
-                name: worklog3
+                name: worklog-api
                 port:
                   number: 5000
