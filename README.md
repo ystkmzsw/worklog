@@ -138,7 +138,7 @@ MongoDBがインストールされていない場合は、以下を参照して�
 CLIコマンド`oc`を用いた説明は行いません。
 
 また、IBM Cloud上にRed Hat OpenShiftクラスタを作成済みであるものとします。
-実際の操作は動画「openshift_operation.mp4」をダウンロードし確認してください。
+実際の操作は動画 [**openshift_operation.mp4**](openshift_operation.mp4) をダウンロードし確認してください。
 
 ### 3.1. プロジェクトの作成
 
