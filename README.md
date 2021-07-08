@@ -276,9 +276,56 @@ WebAPIアプリを参照するWebUIアプリをデプロイします。
 
 # CI/CDの設定と動作確認
 
-## 1. CI/CD設定
+openshiftでは、様々な方法でCI/CD(継続的インテグレーション、継続的デリバリー)を行う事ができます。
 
-change test
+ここでは、github webhookを設定することで、簡単にCI/CDを実現できることを確認します。
+
+具体的には、ソースコードを変更するだけで、テストやリリース工程で利用できるアプリケーションがビルドできること、アプリケーションがデプロイできることを確認します。
+
+**注意)この作業ではgithubのリポジトリに管理者権限が必要です。よくわからない場合は管理者に相談してください。**
+
+## 1. webhook設定
+
+1. OpenShift Webコンソール画面にて、UIをDeveloperモードにし、Topologyを選択します。
+2. 「worklog-ui」を選択し、ResourcesタブのBuilds下にある「BC worklog-ui」をクリックします。
+3. BuildConfigページが表示されるので、画面一番下までスクロールします。
+4. Webhooks URLが記載されています。一番下のType: Githubの右側にある「Copy URL with Secret」をクリックします。これでWebhooks URLがクリップボードにコピーされました。
+5. githubのリポジトリページを開きます。Settingsタブをクリックします。(Settingsタブが無いという方は、そのリポジトリに管理者権限がありません。管理者に相談し管理者権限を付与してもらうか、管理者権限を持つ自身のアカウントにリポジトリをforkしてください)
+6. Webhooksメニューを選択し、「Add webhook」ボタンをクリックします。もしパスワード入力画面が表示された場合は、パスワードを入力してください。
+7. 「Payload URL」に先程コピーした Webhooks URLを貼り付けてください。「Content type」は「application/json」を指定します。
+8. 「Add webhook」をクリックします。
+
+以上でWebUIアプリのWebhook設定は完了です。
+WebAPIアプリも、Topologyで「worklog-api」を選択する以外はすべて同じ作業でWebhook設定が可能ですので、設定してください。
+
+## 2. ソースコードの修正とgit push
+
+Webhookの設定が完了したら、実際にソースコードを修正しgithubにpushしてみましょう。
+
+1. [web/worklog/public/index.html](web/worklog/public/index.html)をエディタで開きます。
+2. `<title>`タグの文字列を、「作業ログ」に修正し、保存します。
+3. github にpushします。適宜完了にあわせて修正してください。
+    * git add web/worklog/public/index.html
+    * git commit -m "change index title"
+    * git push
+
+ここまで完了したら、すぐにOpenShiftWebコンソール画面を開いてください。
+
+## 3. ビルドの自動実行と更新
+
+githubへのpushが完了したら、すぐにOpenShiftWebコンソール画面を開きます。
+
+ビルドが始まっていることを確認しましょう。
+
+1. OpenShift Webコンソール画面にて、UIをDeveloperモードにし、Topologyを選択します。
+2. 「worklog-ui」を選択し、ResourcesタブのBuilds下にある「BC worklog-ui」を確認します。
+3. 新しいビルドが始まっていることを確認します。
+
+ここで、もしビルドが始まっているのであれば設定は成功です。
+
+ビルドが終わったら、アプリケーションのデプロイも完了しています。アプリの動作確認を行いましょう。
+
+以上で、ソースコードをgithubにpushするだけで、テストやリリース工程で利用できるアプリケーションがビルドできること、アプリケーションがデプロイできることを確認することができました。
 
 # その他参考リンク
 
