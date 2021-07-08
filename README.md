@@ -1,148 +1,294 @@
 [![Build Status](https://travis-ci.com/IBM/worklog.svg?branch=master)](https://travis-ci.com/IBM/worklog)
 
-# Work Log
-In this Code Pattern, we will create a Work Log web application using Flask, MongoDB, and Kubernetes. The Work Log application is used to keep track of and log different types of days that are associated with work. The different types of days include:
+# 作業ログ(Work Log)
 
-* Working in the office
-* Working remotely
-* Vacation days
-* Holidays
-* Sick days
+## 概要
 
-When the reader has completed this Code Pattern, they will understand how to:
+Flask、MongoDB、Kubernetesを使用して「作業ログ(Work Log)」Webアプリケーションを作成します。
+作業ログアプリケーションは、以下に示す作業者の日勤状況を記録・追記することができます。
 
-* Create a Python Flask application
-* Incorporate MongoDB into a Python application
-* Deploy and run microservices on Kubernetes
+* オフィス勤務
+* テレワーク(リモートワーク)
+* 休暇
+* 休日
+* 病欠
 
-## Architecture
+このリポジトリの内容を理解することで、以下に対する知識を得ることができます。
 
-![](readme_images/architecture.png)
+* Python Flask アプリケーションを作成する
+* MongoDBをPythonアプリケーションに組み込む
+* OpenShift上にマイクロサービスをデプロイし実行する
 
-1. User interacts with the App UI to initially create an account, login to account, or reset password for their account. Once User is logged in, they can view, add, and edit their work log data.
-2. The functionality of the App UI that the User interacts with is handled by React. React is where the API calls are initialized.
-3. The API calls are processed in the Flask API microservice on Kubernetes and are handled accordingly.
-4. The data is stored, gathered, and/or modified in MongoDB depending on the API calls.
-5. The response from the API calls are handled accordingly by the App UI.
+## アーキテクチャ
 
+![architecture](readme_images/architecture.png)
 
-## Included components
+アプリケーションは左から順に、3つの要素で構成されています。
 
-* [IBM Cloud Container Service](https://console.bluemix.net/docs/containers/container_index.html):  IBM Bluemix Container Service manages highly available apps inside Docker containers and Kubernetes clusters on the IBM Cloud.
-* [Swagger](https://swagger.io/): A framework of API developer tools for the OpenAPI Specification that enables development across the entire API lifecycle.
+1. Reactで構築されたUIWebアプリ
+2. Python Flaskで構築された WebAPIアプリ
+3. WebAPIアプリからアクセスされる、ユーザデータを保存するMongoDB
+
+3つの要素は、以下のやり取りを行います。
+
+1. ユーザは画面を操作して、アカウントの新規作成/ログイン/パスワードリセットを行うことができます。ユーザはログイン後、作業ログを表示、追加、編集できます。
+2. UIは、Reactを通じて処理されます。 Reactは、API呼び出しが初期化される場所です。
+3. API呼び出しは、KubernetesのFlask APIマイクロサービスで処理されます。
+4. データは、API呼び出しを通してMongoDBに保存、または変更されます。
+5. API呼び出しは、UIを通して処理されます。
+
+## 含まれるコンポーネント
+
+* [Red Hat OpenShift on IBM Cloud](https://www.ibm.com/jp-ja/cloud/openshift): IBMがフルマネージドで提供するRed Hat OpenShift on IBM Cloudは、IBM Cloudのエンタープライズ・クラスの規模とセキュリティーを活用して、更新、スケーリング、プロビジョニングを自動化します。
+* [Swagger](https://swagger.io/): APIライフサイクル全体にわたる開発を可能にするOpenAPI仕様のAPI開発者ツールのフレームワークです。
 
 <!--Update this section-->
-## Featured technologies
+## 特筆すべきテクノロジー
 
-* [Container Orchestration](https://www.ibm.com/cloud-computing/bluemix/containers): Automating the deployment, scaling and management of containerized applications.
-* [Microservices](https://www.ibm.com/developerworks/community/blogs/5things/entry/5_things_to_know_about_microservices?lang=en): Collection of fine-grained, loosely coupled services using a lightweight protocol to provide building blocks in modern application composition in the cloud.
-* [Python](https://www.python.org/): Python is a programming language that lets you work more quickly and integrate your systems more effectively.
-* [Flask](http://flask.pocoo.org/): A microframework for Python for building APIs.
-* [React](https://facebook.github.io/react/): JavaScript library for building User Interfaces.
-* [MongoDB](https://www.mongodb.com/): A document NoSQL database.
+* [Microservices](https://www.ibm.com/developerworks/community/blogs/5things/entry/5_things_to_know_about_microservices): 軽量プロトコルを使用して、クラウド内の最新のアプリケーション構成でビルディングブロックを提供する、きめ細かい、緩く結合されたサービスの集合です。
+* [Python](https://www.python.org/): Pythonは、より迅速に作業し、システムをより効果的に統合できるプログラミング言語です。
+* [Flask](http://flask.pocoo.org/): WebAPIを構築するためのPythonのマイクロフレームワークです。
+* [React](https://facebook.github.io/react/): ユーザインターフェイスを構築するためのJavaScriptライブラリです。
+* [MongoDB](https://www.mongodb.com/): ドキュメント志向 NoSQLデータベースです。
 
+# OpenShiftでの公開手順
 
-# Prerequisites
+アプリをOpenShift上で公開するには、次の手順を実施します。詳細は各項目で説明します。
 
-* [Docker](https://www.docker.com/products/docker-desktop)
-* [IBM Cloud Kubernetes Service Provisioned](https://www.ibm.com/cloud/container-service)
+1. [gitリポジトリのクローン](#1-gitリポジトリのクローン)
+2. [ローカルでのアプリケーションの動作確認](#2-ローカルでのアプリケーションの動作確認)
+3. [OpenShiftへのデプロイ](#3-OpenShiftへのデプロイ)
 
-For running these services locally without Docker containers, the following will be needed:
+## 1. gitリポジトリのクローン
 
-* [Python 3.7](https://www.python.org/downloads/release/python-370/)
-* [Relevant Python Libraries](requirements.txt): Use `pip3.7 install`
-* [MongoDB](https://www.mongodb.com/download-center/v2/community)
-* [NPM](https://www.npmjs.com/get-npm)
-* Relevant React Components: Use `npm install`
+ローカル環境にこの `worklog` リポジトリをクローンします。ターミナルにて、以下を実行します。
 
-
-# Steps
-Follow these steps to setup and run this code pattern locally and on the Cloud. The steps are described in detail below.
-
-1. [Clone the repo](#1-clone-the-repo)
-2. [Run the application](#2-run-the-application)
-3. [Deploy to IBM Cloud](#3-deploy-to-ibm-cloud)
-
-### 1. Clone the repo
-
-Clone the `worklog` repo locally. In a terminal, run:
-
-```
-$ git clone https://github.com/IBM/worklog
-$ cd worklog
+```sh
+git clone https://github.com/tty-kwn/worklog
+cd worklog
 ```
 
-### 2. Run the application
-1. Start the application by running `docker-compose up --build` in this repo's root directory.
-2. Once the containers are created and the application is running, use the Open API Doc (Swagger) at `http://localhost:5000/api` and [API.md](API.md) for instructions on how to use the APIs.
-3. Use `http://localhost:3000` to access the React UI.
+## 2. ローカルでのアプリケーションの動作確認
 
-### 3. Deploy to IBM Cloud
+ローカルで動作確認しない場合は、この手順は飛ばして構いません。
 
-1. To allow changes to the Flask application or the React UI, create a repo on [Docker Cloud](https://cloud.docker.com/) where the new modified containers will be pushed to. 
-> NOTE: If a new repo is used for the Docker containers, the container `image` will need to be modified to the name of the new repo used in [deploy-webapp.yml](deploy-webapp.yml) and/or [deploy-webappui.yml](deploy-webappui.yml).
+### 2.1. MongoDBのインストールと起動
 
-```
-$ export DOCKERHUB_USERNAME=<your-dockerhub-username>
+MongoDBがインストールされていない場合は、以下を参照してインストールと起動を行ってください。
 
-$ docker build -t $DOCKERHUB_USERNAME/worklog:latest .
-$ docker build -t $DOCKERHUB_USERNAME/worklogui:latest web/worklog
+* windows: [Install MongoDB Community Edition on Windows](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/)
+* macos: [Install MongoDB Community Edition on macOS](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-os-x/)
+* それ以外: [Install MongoDB](https://docs.mongodb.com/manual/installation/)
 
-$ docker login
+すでにインストール済みの場合は起動を行ってください。起動方法は上記インストール方法に記載されています。
 
-$ docker push $DOCKERHUB_USERNAME/worklog:latest
-$ docker push $DOCKERHUB_USERNAME/worklogui:latest
-```
+### 2.2. Python Flaskで構築された WebAPIアプリの起動
 
-2. Provision the [IBM Cloud Kubernetes Service](https://www.ibm.com/cloud/container-service) and follow the set of instructions for creating a Container and Cluster based on your cluster type, `Standard` vs `Lite`.
+以下を導入してください。
 
-#### Lite Cluster Instructions
+* [Python 3](https://www.python.org/downloads/)
+* [Node.js(NPM)](https://nodejs.org/en/)
 
-3. Run `bx cs workers mycluster` and locate the `Public IP`. This IP is used to access the worklog API and UI (Flask Application). Update the `env` values in both [deploy-webapp.yml](deploy-webapp.yml) and [deploy-webappui.yml](deploy-webappui.yml) to the `Public IP`.
+1. pythonのバージョンは2系ではなく3系を利用します。環境によってはpython/pipコマンドではなくpython3/pip3などである可能性もあるため留意してください。
+2. pipコマンドを実行し、pythonライブラリをインストールします。
 
-4. To deploy the services to the IBM Cloud Kubernetes Service, run:
+    ```sh
+    pip install -r requirements.txt
+    ```
 
-```
-$ kubectl apply -f deploy-mongodb.yml
-$ kubectl apply -f deploy-webapp.yml
-$ kubectl apply -f deploy-webappui.yml
+3. app.shシェルスクリプトを実行し、Python Flaskアプリケーションを起動します。(もしpythonコマンドではなくpython3を利用する場合は、シェルスクリプト内部の`python`コマンドを`python3`コマンドに置き換えて実行してください！)
 
-## Confirm the services are running - this may take a minute
-$ kubectl get pods
-```
+    ```sh
+    ./app.sh
+    ```
 
-5. Use `https://PUBLIC_IP:32001` to access the React UI and the Open API Doc (Swagger) at `https://PUBLIC_IP:32000/api` for instructions on how to make API calls.
+    windowsの場合はシェルスクリプトを利用せず、以下のコマンドを実行してください。
 
-#### Standard Cluster Instructions
+    ```sh
+    python -m app.__init__
+    ```
+
+4. Flaskアプリが起動したら, Swagger APIドキュメント(`http://localhost:5000/api`)と [API.md](API.md) を使ってAPIの利用方法を理解することができます。
+
+### 2.3. Reactで構築されたWebUIアプリの起動
+
+1. Reactアプリディレクトリに移動します。`
+
+    ```sh
+    cd web/worklog
+    ```
+
+2. npmコマンドを実行し、nodejsライブラリをインストールします。
+
+    ```sh
+    npm install
+    ```
+
+3. Reactアプリを起動します。その際、Python FlaskサーバURLを環境変数REACT_APP_APP_SERVERに設定します(UIWebアプリ内部で利用しています)
+
+    ```sh
+    export REACT_APP_APP_SERVER=http://localhost:5000 && npm start
+    ```
+
+4. `http://localhost:3000`にアクセスしてください。React UIを確認することができます。
+
+## 3. OpenShiftへのデプロイ
+
+ここではOpenShift version4.6 のWebUI上でのデプロイ手順を示します。
+CLIコマンド`oc`を用いた説明は行いません。
+
+また、IBM Cloud上にRed Hat OpenShiftクラスタを作成済みであるものとします。
+実際の操作は動画「openshift_operation.mp4」をダウンロードし確認してください。
+
+### 3.1. プロジェクトの作成
+
+UIをAdministratorモードにし、Projectを選択します。
+
+「Create Project」ボタンをクリックしプロジェクト作成ダイアログにてプロジェクトを作成します。
+
+ここでは、プロジェクト名は「worklog」とします。
+
+### 3.2. 永続化ディスクとMongoDBの作成
+
+deploy-mongodb.ymlにはMongoDBをコンテナとして公開するための設定が記述されています。
+
+設定内容はPersistentVolumeClain(永続化ディスク)、StatementSet、Serviceの3つが記述されていますので、テキストエディタなどでファイルを開き、それぞれをコピーします。
+
+#### 3.2.1. PersistentVolumeClaim(永続化ディスク)の作成
+
+コンテナはデータを永続化しません。そのため、mongoDBのデータを永続化するためのディスク領域を定義します。永続化ディスクは「PersistentVolume」もしくは「PersistentVolumeClaim」で定義します。
+
+詳細は[こちら](https://thinkit.co.jp/article/17470)をご参照ください。Kubernetesの記事ですが、OpenShiftでも考え方は全く同じです。
+
+手順は以下のとおりです。
+
+1. 事前に、deploy-mongodb.ymlから`kind: PersistentVolumeClaim`と記載された箇所をコピーしておきます。(`---`で囲まれた箇所です)
+2. UIをAdministratorモードにし、Storage->Persistent Volume Claimsを選択します。
+3. 「Create Persistent Volume Claim」ボタンをクリックし、「Create Persistent Volume Claim」画面を表示します。
+4. 「Edit YAML」リンクをクリックし、deploy-mongodb.ymlからコピーしたテキストを貼り付けて「Create」ボタンをクリックします。
+
+なお、ここで貼り付けたYAMLは、GUI上で操作する場合は以下の設定を行ったと同義です。
+
+* Storage Class: ibmc-block-bronze
+* Persistent Volume Claim Name: pvc
+* Access Mode: Single User (RWO)
+* Size: 2GiB
+
+作成には数十秒を要します。しばらくお待ち下さい。
+
+画面上部の「pvc」という名前の箇所の横に示された「pending」という砂時計アイコンが、「Bound」というアイコンに変われば完了です。
+
+#### 3.2.2. StatefulSetの作成
+
+続けて、StatefulSetを作成します。
+StatefulSetは、PersistentVolumeClaimを使って安定した永続ストレージを供給する手段で、永続化したいデータを持つDBの作成などで利用されます。
+
+手順は以下のとおりです。
+
+1. 事前に、deploy-mongodb.ymlから`kind: StatefulSet`と記載された箇所をコピーしておきます。(`---`で囲まれた箇所です)
+2. UIをAdministratorモードにし、Workloads->Stateful Setsを選択します。
+3. 「Create Stateful Set」ボタンをクリックし、「Create Stateful Set」画面を表示します。
+4. deploy-mongodb.ymlからコピーしたテキストを貼り付けて「Create」ボタンをクリックします。
+
+これで、永続化ディスクを持つmongoDBが作成されました。
+
+#### 3.2.3. Serviceの作成
+
+続けて、上記で作成したStatefulSetをネットワークからアクセス可能するために、Serviceを作成します。
+Serviceは、StatefulSetをローカルネットワーク上に公開し、同一ネットワーク内の他のアプリからアクセスできるようにする機構です。
+
+手順は以下のとおりです。
+
+1. 事前に、deploy-mongodb.ymlから`kind: Service`と記載された箇所をコピーしておきます。(`---`で囲まれた箇所です)
+2. UIをAdministratorモードにし、Network->Servicesを選択します。
+3. 「Create Service」ボタンをクリックし、「Create Service」画面を表示します。
+4. deploy-mongodb.ymlからコピーしたテキストを貼り付けて「Create」ボタンをクリックします。
+
+これで、mongoDBを他のアプリから参照可能となりました。
+
+### 3.3. Python Flaskで構築された WebAPIアプリのs2iデプロイ
+
+mongoDBを参照するPython Flask WebAPIアプリをデプロイします。
+
+手順は以下のとおりです。
+
+1. UIをDeveloperモードにし、StatefulSets「mongo」が表示されていることを確認します。
+2. +Addを選択します。
+3. 「From GIT」を選択します。
+4. gitリポジトリURLを取得します。githubの場合は「code」ボタンをクリックし「HTTPS」タブに書かれたURLの右側にあるコピーボタンをクリックします。**注) HTTPSではなくSSH URLを選択する場合、この手順に加えてSecretの生成と登録が必要となります。**
+5. 「Git Repo URL」に、コピーしたgitリポジトリURLを貼り付けます。
+6. Builder Imageで「Python」を選択します。
+7. 「Application Name」に「worklog」を、「Name」には「worklog-api」を入力します。
+8. 「Routing」リンクをクリックします。「Target Port」に「5000」を入力し「Create 5000」を選択します。
+9. 「Create」ボタンをクリックします。
+
+これで、Python Flask WebAPIアプリのデプロイが開始されました。
+
+(A)で書かれているのは「アプリケーション」を意図しており、Deploymentなどのオブジェクトをグルーピングする概念です。
+
+先程の設定画面にて、「Application Name」で指定した「worklog」が表示されていることを確認することができます。
+(なお、設定画面で「Name」で設定した値は、DeploymentのNameになります)
+
+Kubernetesに慣れた方は、dockerリポジトリを通さずにソースコードを直接デプロイできることに驚かれたのではないでしょうか。これがOpenShiftの利点の1つ、s2i(source to image)機能です。
+
+なお、ビルドの状況はTopology画面のBuildsに「Build #n is xxxx」というビルド状況と「View logs」というリンクがあるので、そこをクリックすることでビルドログを確認することができます。
+
+同様に、ビルド完了後のアプリ起動確認はTopology画面のPodsに「View logs」というリンクがあるので、そこをクリックすることで動作ログを確認することができます。
+
+### 3.4. Reactで構築された WebUIアプリのs2iデプロイ
+
+WebAPIアプリを参照するWebUIアプリをデプロイします。
+
+手順は以下のとおりです。
+
+1. UIをDeveloperモードにし,Topologyを選択します。
+2. WebAPIアプリ(worklog-api)をクリックし、Resourcesタブの最下部にあるRoutesから、Location URLをコピーします。コピーしたURLはテキストエディタなどに退避します(あとで使います)。
+3. +Addを選択し、「From GIT」を選択します。
+4. gitリポジトリURLを取得します。githubの場合は「code」ボタンをクリックし「HTTPS」タブに書かれたURLの右側にあるコピーボタンをクリックします。**注) HTTPSではなくSSH URLを選択する場合、この手順に加えてSecretの生成と登録が必要となります。**
+5. 「Git Repo URL」に、コピーしたgitリポジトリURLを貼り付けます。
+6. WebUIアプリはアプリケーションルートを(gitリポジトリルート)/web/worklogです。「Show Advanced Git Options」リンクをクリックし、表示された「Context Dir」に`/web/worklog`を指定します。
+7. Builder Imageで「Nodejs」を選択します。
+8. 「Application Name」に「worklog」を、「Name」には「worklog-ui」を入力します。
+9. 「Routing」リンクをクリックします。「Target Port」に「3000」を入力し「Create 3000」を選択します。
+10. 「Deployments」リンクをクリックします。ここでは環境変数を指定できます。このアプリでは内部でREACT_APP_APP_SERVERという変数をWebAPIサーバのURLとして利用しています。「NAME」には「REACT_APP_APP_SERVER」、「VALUE」には2でコピー、退避しておいたURLをペーストします。
+11. 「Create」ボタンをクリックします。
+
+これで、Reactで構築された WebUIアプリのデプロイが開始されました。
+(動画では間違ってnginxを指定してしまっているのでいくつかやり直しています)
+
+### 3.5. Ingressの作成
+
+これまでの作業でもアプリケーションの公開は可能ですが、オプションとして、SSLオフロードなどのロードバランサの機能を提供するIngressをデプロイします。
+
+1. IBM Cloudクラスタページに行き、画面を少し下にスライドしたところにある「ネットワーキング」の「Ingressサブドメイン」の文字列をコピーします。
+1. ingress.ymlを開き、`<ingress subdomain here>`と記載している箇所に、コピーした「Ingressサブドメイン」を貼り付けます。その後、yamlに記載した内容をすべてコピーしておきます。
+2. UIをAdministratorモードにし、Networking->Ingressesを選択します。
+3. 「Create Ingress」ボタンをクリックし、「Create Ingress」画面を表示します。
+4. ingress.ymlからコピーしたテキストを貼り付けて「Create」ボタンをクリックします。
+
+以上で、Ingressの公開が完了しました。
+
+### 3.6. 動作確認
+
+`http://<INGRESS_SUBDOMAIN>` にアクセスすることで、WebUIページを、`http://<INGRESS_SUBDOMAIN>/api`にアクセスすることで、SwaggerAPIページを確認することができます。
+
+注意) httpsの設定はしていませんので、httpでアクセスしてください。特にchromeは`http://`という文字列が隠れてしまうので、明示的に指定してください。
+
+# CI/CDの設定と動作確認
+
+## 1. CI/CD設定
 
 
-3. Run `bx cs cluster-get <CLUSTER_NAME>` and locate the `Ingress Subdomain` and `Ingress Secret`. This is the domain of the URL that is to be used to access the UI and Flask Application on the Cloud. Update the `env` values in both [deploy-webapp.yml](deploy-webapp.yml) and [deploy-webappui.yml](deploy-webappui.yml) to the `Ingress Subdomain`. In addition, update the `host` and `secretName` in [ingress.yml](ingress.yml) to `Ingress Subdomain` and `Ingress Secret`.
 
-4. To deploy the services to the IBM Cloud Kubernetes Service, run:
+# その他参考リンク
 
-```
-$ kubectl apply -f deploy-mongodb.yml
-$ kubectl apply -f deploy-webapp.yml
-$ kubectl apply -f deploy-webappui.yml
-
-## Confirm the services are running - this may take a minute
-$ kubectl get pods
-
-## Update protocol being used to https
-$ kubectl apply -f ingress.yml
-```
-
-5. Use `https://<INGRESS_SUBDOMAIN>` to access the React UI and the Open API Doc (Swagger) at `https://<INGRESS_SUBDOMAIN>/api` for instructions on how to make API calls.
-
-
-# Links
 * [Flask](http://flask.pocoo.org/)
 * [Swagger Editor](https://editor.swagger.io/)
 
+# 参考情報
 
-# Learn more
-* **Container Code Patterns**: Enjoyed this Code Pattern? Check out our other [Container Code Patterns](https://developer.ibm.com/patterns/category/containers/).
-* **Python Code Patterns**: Enjoyed this Code Pattern? Check out our other [Python Code Patterns](https://developer.ibm.com/patterns/category/python/).
+* **Container Code Patterns**:コードパターンを楽しんでますか? 他の[Container Code Patterns](https://developer.ibm.com/patterns/category/containers/)もチェックしてみてください。
+* **Python Code Patterns**:コードパターンを楽しんでますか? 他の[Python Code Patterns](https://developer.ibm.com/patterns/category/python/)もチェックしてみてください。
 
 # License
 
