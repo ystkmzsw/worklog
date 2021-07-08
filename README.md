@@ -148,15 +148,15 @@ UIをAdministratorモードにし、Projectを選択します。
 
 ここでは、プロジェクト名は「worklog」とします。
 
-### 3.2. 永続化ディスクとMongoDBの作成
+### 3.2. 永続化ボリュームとMongoDBの作成
 
 deploy-mongodb.ymlにはMongoDBをコンテナとして公開するための設定が記述されています。
 
-設定内容はPersistentVolumeClain(永続化ディスク)、StatementSet、Serviceの3つが記述されていますので、テキストエディタなどでファイルを開き、それぞれをコピーします。
+設定内容はPersistentVolumeClain(永続化ボリューム)、StatementSet、Serviceの3つが記述されていますので、テキストエディタなどでファイルを開き、それぞれをコピーします。
 
-#### 3.2.1. PersistentVolumeClaim(永続化ディスク)の作成
+#### 3.2.1. PersistentVolumeClaim(永続化ボリューム)の作成
 
-コンテナはデータを永続化しません。そのため、mongoDBのデータを永続化するためのディスク領域を定義します。永続化ディスクは「PersistentVolume」もしくは「PersistentVolumeClaim」で定義します。
+コンテナはデータを永続化しません。そのため、mongoDBのデータを永続化するためのディスク領域を定義します。永続化ボリュームは「PersistentVolume」もしくは「PersistentVolumeClaim」で定義します。
 
 詳細は[こちら](https://thinkit.co.jp/article/17470)をご参照ください。Kubernetesの記事ですが、OpenShiftでも考え方は全く同じです。
 
@@ -178,6 +178,8 @@ deploy-mongodb.ymlにはMongoDBをコンテナとして公開するための設�
 
 画面上部の「pvc」という名前の箇所の横に示された「pending」という砂時計アイコンが、「Bound」というアイコンに変われば完了です。
 
+なお、作成されたPersistent Volume SizeのSizeが2GiBではなく20GiBとなっています。これはStorage Classで指定したibmc-block-bronzeが最小20GiBから割り当てられる仕様であるためです。そのため、こちらの指定したSizeは最小値20GiBで置き換えられています。
+
 #### 3.2.2. StatefulSetの作成
 
 続けて、StatefulSetを作成します。
@@ -190,7 +192,11 @@ StatefulSetは、PersistentVolumeClaimを使って安定した永続ストレー
 3. 「Create Stateful Set」ボタンをクリックし、「Create Stateful Set」画面を表示します。
 4. deploy-mongodb.ymlからコピーしたテキストを貼り付けて「Create」ボタンをクリックします。
 
-これで、永続化ディスクを持つmongoDBが作成されました。
+これで、永続化ボリュームを持つmongoDBが作成されました。
+
+OpenShiftでIBM Cloudストレージを用いた永続化ボリュームを利用する方法についてより理解を深めたい方は、[IBM Cloud Docs/Kubernetesストレージの基本について](https://cloud.ibm.com/docs/containers?topic=containers-kube_concepts&locale=ja)をぜひご参照ください。
+
+(IBM Cloud Kubernetes Serviceの資料ですが、Red hat OpenShift on IBM Cloudでもおおよそ同じ構成で利用可能です。)
 
 #### 3.2.3. Serviceの作成
 
@@ -229,7 +235,7 @@ mongoDBを参照するPython Flask WebAPIアプリをデプロイします。
 先程の設定画面にて、「Application Name」で指定した「worklog」が表示されていることを確認することができます。
 (なお、設定画面で「Name」で設定した値は、DeploymentのNameになります)
 
-Kubernetesに慣れた方は、dockerリポジトリを通さずにソースコードを直接デプロイできることに驚かれたのではないでしょうか。これがOpenShiftの利点の1つ、s2i(source to image)機能です。
+**Kubernetesに慣れた方は、dockerリポジトリを通さずにソースコードを直接デプロイできることに驚かれたのではないでしょうか。これがOpenShiftの利点の1つ、s2i(source to image)機能です。**
 
 なお、ビルドの状況はTopology画面のBuildsに「Build #n is xxxx」というビルド状況と「View logs」というリンクがあるので、そこをクリックすることでビルドログを確認することができます。
 
@@ -258,7 +264,7 @@ WebAPIアプリを参照するWebUIアプリをデプロイします。
 
 ### 3.5. Ingressの作成
 
-これまでの作業でもアプリケーションの公開は可能ですが、オプションとして、SSLオフロードなどのロードバランサの機能を提供するIngressをデプロイします。
+これまでの作業でもアプリケーションの公開は可能ですが、オプションとして、SSLオフロード、負荷分散、セッションアフィニティなどのロードバランサ・リバースプロキシの機能を提供するIngressをデプロイします。
 
 1. IBM Cloudクラスタページに行き、画面を少し下にスライドしたところにある「ネットワーキング」の「Ingressサブドメイン」の文字列をコピーします。
 1. ingress.ymlを開き、`<ingress subdomain here>`と記載している箇所に、コピーした「Ingressサブドメイン」を貼り付けます。その後、yamlに記載した内容をすべてコピーしておきます。
@@ -267,6 +273,10 @@ WebAPIアプリを参照するWebUIアプリをデプロイします。
 4. ingress.ymlからコピーしたテキストを貼り付けて「Create」ボタンをクリックします。
 
 以上で、Ingressの公開が完了しました。
+
+OpenShiftでアプリケーションを公開する方法についてより理解を深めたい方は、[IBM Cloud Docs/アプリの公開サービスの選択](https://cloud.ibm.com/docs/containers?topic=containers-cs_network_planning&locale=ja)をぜひご参照ください。
+
+(IBM Cloud Kubernetes Serviceの資料ですが、Red hat OpenShift on IBM Cloudでも概念は同一です。)
 
 ### 3.6. 動作確認
 
