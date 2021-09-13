@@ -4,7 +4,7 @@ kind: Service
 metadata:
   name: mongo
   labels:
-    app: mongo-statefulset
+    app: mongo
 spec:
   type: ClusterIP
   clusterIP: None
@@ -12,36 +12,31 @@ spec:
     - port: 27017
       name: mongo
   selector:
-    app: mongo-statefulset
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: pvc
-spec:
-  accessModes: ["ReadWriteOnce"]
-  storageClassName: ibmc-block-bronze    # 20Gi IKS
-  # storageClassName: gluster-heketi     # 12Gi GlusterFS
-  # storageClassName: standard           # 2Gi  minikube
-  resources:
-    requests:
-      storage: 2Gi
+    app: mongo
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: mongo
 spec:
-  serviceName: mongo
   replicas: 1
   selector:
     matchLabels:
-      app: mongo-statefulset
+      app: mongo
   template:
     metadata:
       labels:
-        app: mongo-statefulset
+        app: mongo
     spec:
+      initContainers:
+        - name: init-mongo
+          image: alpine
+          command: ['/bin/sh']
+          args: ['-c', 'mkdir -p /mnt/db && chmod -R 777 /mnt/db']
+          volumeMounts:
+          - mountPath: /mnt
+            name: data-vol
+            readOnly: false
       containers:
         - name: mongo
           image: mongo
@@ -49,17 +44,9 @@ spec:
             - containerPort: 27017
               name: mongo
           volumeMounts:
-            - name: pvc-data
-              mountPath: /data/db
-          livenessProbe:
-            exec:
-              command:
-                - /bin/sh
-                - -c
-                - mongo --port 27017 --eval "rs.status()" | grep -vq "REMOVED"
-            initialDelaySeconds: 45
-            timeoutSeconds: 5
+            - mountPath: /data
+              name: data-vol
+              readOnly: false
       volumes:
-        - name: pvc-data
-          persistentVolumeClaim:
-            claimName: pvc
+        - name: data-vol
+          emptyDir: {}
